@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>صندوق الذاكرة</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    #main-menu {
+      display: block;
+    }
+    #game-container {
+      display: none;
+    }
+    #box {
+      width: 200px;
+      height: 200px;
+      background: #444;
+      margin: 20px auto;
+      border: 5px solid #666;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 64px;
+      border-radius: 20px;
+    }
+    .hidden {
+      background: #222;
+      color: #222;
+    }
+    #controls {
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      background: #28a;
+      color: white;
+    }
+    .guess-button {
+      font-size: 32px;
+      margin: 10px;
+      background: #555;
+    }
+    #theme-toggle {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: #888;
+      color: black;
+    }
+    #timer {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #ffd700;
+    }
+  </style>
+</head>
+<body>
+  <div id="main-menu">
+    <h1>🎮 صندوق الذاكرة</h1>
+    <button onclick="startGame()">Play ▶️</button>
+    <p>اختبر ذاكرتك وتحدى نفسك!</p>
+  </div>
+
+  <div id="game-container">
+    <h2 id="round-title">جولة 1</h2>
+    <div id="box" class="hidden">■</div>
+    <div id="timer">⏱ الوقت المتبقي: <span id="time-left">10</span> ثانية</div>
+    <div id="controls">
+      <button onclick="startRound()">ابدأ الجولة</button>
+      <div id="guess-area"></div>
+      <p>🌟 الرقم القياسي: <span id="high-score">0</span></p>
+      <p>❤️ المحاولات المتبقية: <span id="tries-left">3</span></p>
+      <button onclick="resetGame()">🔄 إعادة اللعب</button>
+    </div>
+  </div>
+
+  <button id="theme-toggle" onclick="toggleTheme()">🌓</button>
+
+  <audio id="sound-correct" src="https://cdn.pixabay.com/audio/2022/03/15/audio_ef995dbddb.mp3"></audio>
+  <audio id="sound-wrong" src="https://cdn.pixabay.com/audio/2022/03/15/audio_2f2e563a86.mp3"></audio>
+  <audio id="sound-show" src="https://cdn.pixabay.com/audio/2022/03/15/audio_a3f45a30a1.mp3"></audio>
+
+  <script>
+    const elements = ["🔵", "🟢", "🟡", "🟣", "⭐", "💀", "🧊", "🔥"];
+    let sequence = [];
+    let round = 1;
+    let userGuess = [];
+    let showing = false;
+    let highScore = 0;
+    let triesLeft = 3;
+    let darkTheme = true;
+    let timer;
+    let timeLeft = 10;
+
+    const soundCorrect = document.getElementById("sound-correct");
+    const soundWrong = document.getElementById("sound-wrong");
+    const soundShow = document.getElementById("sound-show");
+
+    if (localStorage.getItem("highScore")) {
+      highScore = parseInt(localStorage.getItem("highScore"));
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("high-score").textContent = highScore;
+      });
+    }
+
+    function startGame() {
+      document.getElementById("main-menu").style.display = "none";
+      document.getElementById("game-container").style.display = "block";
+      startRound();
+    }
+
+    function startRound() {
+      clearInterval(timer);
+      timeLeft = 10;
+      document.getElementById("time-left").textContent = timeLeft;
+      sequence = [];
+      userGuess = [];
+      document.getElementById("guess-area").innerHTML = "";
+      document.getElementById("round-title").textContent = `جولة ${round}`;
+      document.getElementById("tries-left").textContent = triesLeft;
+      showSequence(0);
+    }
+
+    function showSequence(i) {
+      if (i >= round) {
+        prepareGuess();
+        startTimer();
+        return;
+      }
+      const box = document.getElementById("box");
+      const random = elements[Math.floor(Math.random() * elements.length)];
+      sequence.push(random);
+      box.textContent = random;
+      box.classList.remove("hidden");
+      soundShow.play();
+      setTimeout(() => {
+        box.classList.add("hidden");
+        box.textContent = "■";
+        setTimeout(() => showSequence(i + 1), 600);
+      }, 1000);
+    }
+
+    function prepareGuess() {
+      const guessArea = document.getElementById("guess-area");
+      guessArea.innerHTML = "اختر العناصر بالترتيب الصحيح:<br>";
+      elements.forEach(el => {
+        const btn = document.createElement("button");
+        btn.textContent = el;
+        btn.classList.add("guess-button");
+        btn.onclick = () => handleGuess(el);
+        guessArea.appendChild(btn);
+      });
+    }
+
+    function handleGuess(symbol) {
+      userGuess.push(symbol);
+      if (userGuess.length === sequence.length) {
+        clearInterval(timer);
+        checkAnswer();
+      }
+    }
+
+    function checkAnswer() {
+      let correct = true;
+      for (let i = 0; i < sequence.length; i++) {
+        if (sequence[i] !== userGuess[i]) {
+          correct = false;
+          break;
+        }
+      }
+      if (correct) {
+        soundCorrect.play();
+        round++;
+        if (round - 1 > highScore) {
+          highScore = round - 1;
+          document.getElementById("high-score").textContent = highScore;
+          localStorage.setItem("highScore", highScore);
+        }
+        alert("✅ صحيح! الجولة التالية");
+        startRound();
+      } else {
+        soundWrong.play();
+        triesLeft--;
+        if (triesLeft > 0) {
+          alert(`❌ خطأ! تبقى لك ${triesLeft} محاولة`);
+          document.getElementById("tries-left").textContent = triesLeft;
+          startRound();
+        } else {
+          alert("💥 انتهت المحاولات! ستبدأ من الجولة 1");
+          round = 1;
+          triesLeft = 3;
+          startRound();
+        }
+      }
+    }
+
+    function resetGame() {
+      round = 1;
+      triesLeft = 3;
+      startRound();
+    }
+
+    function toggleTheme() {
+      darkTheme = !darkTheme;
+      document.body.style.background = darkTheme ? "#111" : "#eee";
+      document.body.style.color = darkTheme ? "white" : "black";
+    }
+
+    function startTimer() {
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("time-left").textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          soundWrong.play();
+          alert("⏱ انتهى الوقت!");
+          triesLeft--;
+          if (triesLeft > 0) {
+            document.getElementById("tries-left").textContent = triesLeft;
+            startRound();
+          } else {
+            alert("💥 انتهت المحاولات! ستبدأ من الجولة 1");
+            round = 1;
+            triesLeft = 3;
+            startRound();
+          }
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
