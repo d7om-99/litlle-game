@@ -59,9 +59,7 @@
       color: black;
     }
     #timer {
-      font-size: 18px;
-      margin-top: 10px;
-      color: #ffd700;
+      display: none;
     }
   </style>
 </head>
@@ -96,12 +94,9 @@
     let sequence = [];
     let round = 1;
     let userGuess = [];
-    let showing = false;
     let highScore = 0;
     let triesLeft = 3;
     let darkTheme = true;
-    let timer;
-    let timeLeft = 10;
 
     const soundCorrect = document.getElementById("sound-correct");
     const soundWrong = document.getElementById("sound-wrong");
@@ -121,9 +116,6 @@
     }
 
     function startRound() {
-      clearInterval(timer);
-      timeLeft = 10;
-      document.getElementById("time-left").textContent = timeLeft;
       sequence = [];
       userGuess = [];
       document.getElementById("guess-area").innerHTML = "";
@@ -135,7 +127,6 @@
     function showSequence(i) {
       if (i >= round) {
         prepareGuess();
-        startTimer();
         return;
       }
       const box = document.getElementById("box");
@@ -166,7 +157,6 @@
     function handleGuess(symbol) {
       userGuess.push(symbol);
       if (userGuess.length === sequence.length) {
-        clearInterval(timer);
         checkAnswer();
       }
     }
@@ -215,28 +205,6 @@
       darkTheme = !darkTheme;
       document.body.style.background = darkTheme ? "#111" : "#eee";
       document.body.style.color = darkTheme ? "white" : "black";
-    }
-
-    function startTimer() {
-      timer = setInterval(() => {
-        timeLeft--;
-        document.getElementById("time-left").textContent = timeLeft;
-        if (timeLeft <= 0) {
-          clearInterval(timer);
-          soundWrong.play();
-          alert("⏱ انتهى الوقت!");
-          triesLeft--;
-          if (triesLeft > 0) {
-            document.getElementById("tries-left").textContent = triesLeft;
-            startRound();
-          } else {
-            alert("💥 انتهت المحاولات! ستبدأ من الجولة 1");
-            round = 1;
-            triesLeft = 3;
-            startRound();
-          }
-        }
-      }, 1000);
     }
   </script>
 </body>
