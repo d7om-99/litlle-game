@@ -62,9 +62,6 @@
       background: #888;
       color: black;
     }
-    #timer {
-      display: none;
-    }
     #stats {
       margin-top: 20px;
       font-size: 14px;
@@ -94,6 +91,12 @@
       <div id="reward"></div>
       <div id="stats"></div>
       <button onclick="resetGame()">🔄 إعادة اللعب</button>
+    </div>
+
+    <!-- زر مشاهدة إعلان للحصول على محاولة -->
+    <div id="ad-reward-container" style="display: none; margin-top: 20px;">
+      <p>🎁 هل ترغب بمحاولة إضافية؟</p>
+      <button onclick="watchAdForTry()">شاهد إعلان</button>
     </div>
   </div>
 
@@ -149,6 +152,7 @@
       document.getElementById("round-title").textContent = `جولة ${round}`;
       document.getElementById("tries-left").textContent = triesLeft;
       document.getElementById("reward").textContent = "";
+      document.getElementById("ad-reward-container").style.display = "none";
       updateStats();
       showSequence(0);
     }
@@ -222,12 +226,8 @@
           document.getElementById("tries-left").textContent = triesLeft;
           startRound();
         } else {
-          alert("💥 انتهت المحاولات! ستبدأ من الجولة 1");
-          round = 1;
-          triesLeft = 3;
-          totalCorrect = 0;
-          totalWrong = 0;
-          startRound();
+          alert("💥 انتهت المحاولات!");
+          document.getElementById("ad-reward-container").style.display = "block";
         }
       }
       updateStats();
@@ -238,6 +238,7 @@
       triesLeft = 3;
       totalCorrect = 0;
       totalWrong = 0;
+      document.getElementById("ad-reward-container").style.display = "none";
       startRound();
     }
 
@@ -249,6 +250,29 @@
       darkTheme = !darkTheme;
       document.body.style.background = darkTheme ? "#111" : "#eee";
       document.body.style.color = darkTheme ? "white" : "black";
+    }
+
+    // إعلان AdMob بمكافأة
+    async function watchAdForTry() {
+      try {
+        const rewarded = new admob.RewardedAd({
+          adUnitId: "ca-app-pub-8805970751537007/8932327982"
+        });
+
+        await rewarded.load();
+        await rewarded.show();
+
+        rewarded.on('rewarded', (reward) => {
+          alert("🎉 حصلت على محاولة إضافية!");
+          triesLeft = 1;
+          document.getElementById("tries-left").textContent = triesLeft;
+          document.getElementById("ad-reward-container").style.display = "none";
+          startRound();
+        });
+      } catch (e) {
+        alert("حدث خطأ أثناء عرض الإعلان.");
+        console.error(e);
+      }
     }
   </script>
 </body>
